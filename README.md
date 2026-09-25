@@ -24,9 +24,11 @@ This plugin reads the official `web-types.json` metadata distributed with the in
 
 ## Requirements
 
-- Neovim 0.7 or later
+- Neovim 0.10 or later
 - [nvim-cmp](https://github.com/hrsh7th/nvim-cmp)
 - Vuetify 2, 3, or 4 installed in `node_modules`
+
+The plugin has been tested with Neovim 0.11.5.
 
 ## Installation
 
@@ -70,6 +72,34 @@ use {
     })
   end,
 }
+```
+
+### nvpm
+
+Add to your nvpm `config.json`:
+
+```json
+{
+  "plugins": [
+    {
+      "url": "hrsh7th/nvim-cmp",
+      "dependencies": ["ue555/cmp-vuetify"]
+    }
+  ]
+}
+```
+
+Then configure in your `init.lua`:
+
+```lua
+local cmp = require("cmp")
+
+cmp.setup({
+  sources = {
+    { name = "nvim_lsp" },
+    { name = "vuetify" },
+  },
+})
 ```
 
 ## Usage
@@ -171,8 +201,13 @@ require("cmp_vuetify").setup({
 
 1. **Installed package** (highest priority): `node_modules/vuetify/package.json`
    - Works even with `workspace:*` or `catalog:` dependencies
-2. **Project dependencies**: `package.json` in project root
-3. **Manual configuration**: `version` in setup options
+2. **Manual configuration**: `version` in setup options
+   - Used only when the installed package version cannot be read
+3. **Project dependencies**: `package.json` in project root
+
+The `version` option does not load metadata for a different Vuetify version.
+Completion data is always read from the installed package's
+`web-types.json`.
 
 ### Why web-types.json?
 
@@ -232,7 +267,9 @@ make test
 - ✅ **Multi-line tags**: Prop completion across multiple lines
 - ✅ **Unknown tags**: No Vuetify completions for non-Vuetify tags
 
-All 20 tests pass with real Vuetify 2, 3, and 4 metadata.
+All 20 tests pass using reduced `web-types.json` fixtures for Vuetify 2, 3,
+and 4. The completion path was also verified separately with the published
+Vuetify 2.7.2, 3.13.5, and 4.2.2 packages.
 
 ## License
 

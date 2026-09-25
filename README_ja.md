@@ -24,9 +24,11 @@ Vuetifyコンポーネントとpropsの補完機能を提供する[nvim-cmp](htt
 
 ## 必要要件
 
-- Neovim 0.7以降
+- Neovim 0.10以降
 - [nvim-cmp](https://github.com/hrsh7th/nvim-cmp)
 - `node_modules`にインストールされたVuetify 2、3、4のいずれか
+
+Neovim 0.11.5で動作確認済みです。
 
 ## インストール
 
@@ -70,6 +72,34 @@ use {
     })
   end,
 }
+```
+
+### nvpm
+
+nvpmの`config.json`に追加：
+
+```json
+{
+  "plugins": [
+    {
+      "url": "hrsh7th/nvim-cmp",
+      "dependencies": ["ue555/cmp-vuetify"]
+    }
+  ]
+}
+```
+
+その後、`init.lua`で設定：
+
+```lua
+local cmp = require("cmp")
+
+cmp.setup({
+  sources = {
+    { name = "nvim_lsp" },
+    { name = "vuetify" },
+  },
+})
 ```
 
 ## 使用方法
@@ -171,8 +201,13 @@ require("cmp_vuetify").setup({
 
 1. **インストール済みパッケージ**（最優先）: `node_modules/vuetify/package.json`
    - `workspace:*`や`catalog:`依存関係でも動作
-2. **プロジェクトの依存関係**: プロジェクトルートの`package.json`
-3. **手動設定**: setupオプションの`version`
+2. **手動設定**: setupオプションの`version`
+   - インストール済みパッケージのバージョンを取得できない場合のみ使用
+3. **プロジェクトの依存関係**: プロジェクトルートの`package.json`
+
+`version`オプションは、別バージョンのVuetifyメタデータを読み込む
+ための設定ではありません。補完データは常にインストール済み
+パッケージの`web-types.json`から読み込みます。
 
 ### なぜweb-types.jsonを使用するのか？
 
@@ -232,7 +267,9 @@ make test
 - ✅ **複数行タグ**: 複数行に渡るprops補完
 - ✅ **不明なタグ**: Vuetifyでないタグには補完を返さない
 
-実際のVuetify 2、3、4のメタデータを使用した全20テストが成功しています。
+Vuetify 2、3、4の縮小版`web-types.json` fixtureを使用した全20テストが
+成功しています。また、公開されているVuetify 2.7.2、3.13.5、4.2.2の
+実パッケージを使用して、補完経路を別途確認済みです。
 
 ## 実装の詳細
 
@@ -257,7 +294,7 @@ make test
 | 3.13.5  | 198            | 41             |
 | 4.2.2   | 210            | 42             |
 
-詳細は[テスト結果.md](./テスト結果.md)を参照してください。
+修正内容と検証結果の詳細は[変更点.md](./変更点.md)を参照してください。
 
 ## ライセンス
 
