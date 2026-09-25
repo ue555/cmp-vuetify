@@ -53,25 +53,27 @@ Neovim 0.11.5で動作確認済みです。
 }
 ```
 
-### packer.nvim
+### pckr.nvim
 
 ```lua
-use {
-  "hrsh7th/nvim-cmp",
-  requires = {
-    "ue555/cmp-vuetify",
-  },
-  config = function()
-    local cmp = require("cmp")
+require("pckr").add({
+  {
+    "hrsh7th/nvim-cmp",
+    requires = {
+      "ue555/cmp-vuetify",
+    },
+    config = function()
+      local cmp = require("cmp")
 
-    cmp.setup({
-      sources = {
-        { name = "nvim_lsp" },
-        { name = "vuetify" },
-      },
-    })
-  end,
-}
+      cmp.setup({
+        sources = {
+          { name = "nvim_lsp" },
+          { name = "vuetify" },
+        },
+      })
+    end,
+  },
+})
 ```
 
 ### nvpm
