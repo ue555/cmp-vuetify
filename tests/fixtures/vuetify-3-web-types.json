@@ -1,0 +1,27 @@
+{
+  "name": "vuetify",
+  "version": "3.13.5",
+  "contributions": {
+    "html": {
+      "tags": [
+        {
+          "name": "VBtn",
+          "description": "Button component",
+          "doc-url": "https://vuetifyjs.com/api/v-btn/",
+          "attributes": [
+            { "name": "color", "value": { "type": "string" } },
+            { "name": "variant", "value": { "type": "string" } },
+            { "name": "density", "value": { "type": "string" } },
+            { "name": "stacked", "value": { "type": "boolean" } }
+          ]
+        },
+        { "name": "VMain", "attributes": [] },
+        { "name": "VCardItem", "attributes": [] },
+        { "name": "VDatePicker", "attributes": [] },
+        { "name": "VTreeview", "attributes": [] },
+        { "name": "VCalendar", "attributes": [] },
+        { "name": "VDataIterator", "attributes": [] }
+      ]
+    }
+  }
+}

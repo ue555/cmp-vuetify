@@ -1,0 +1,53 @@
+# Vim/Neovim temporary files
+*.swp
+*.swo
+*.swn
+*~
+.*.sw[a-z]
+*.un~
+Session.vim
+.netrwhist
+
+# Lua bytecode
+*.luac
+luac.out
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# Linux
+*~
+.directory
+.Trash-*
+
+# Test temporary files
+/tmp/
+.plenary/
+
+# nvim-cmp test dependencies
+/tests/.deps/
+
+# Coverage reports
+*.coverage
+coverage/
+htmlcov/
+
+# Log files
+*.log
+
+# IDE files
+.vscode/
+.idea/
+*.iml
+
+# Project specific temporary files
+node_modules/
+package-lock.json
+yarn.lock

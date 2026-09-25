@@ -1,0 +1,24 @@
+{
+  "name": "vuetify",
+  "version": "4.2.2",
+  "contributions": {
+    "html": {
+      "tags": [
+        {
+          "name": "VBtn",
+          "description": "Button component",
+          "doc-url": "https://vuetifyjs.com/api/v-btn/",
+          "attributes": [
+            { "name": "color", "value": { "type": "string" } },
+            { "name": "variant", "value": { "type": "string" } },
+            { "name": "hoverElevation", "value": { "type": "string | number" } }
+          ]
+        },
+        { "name": "VMain", "attributes": [] },
+        { "name": "VIconBtn", "attributes": [] },
+        { "name": "VDatePicker", "attributes": [] },
+        { "name": "VTreeview", "attributes": [] }
+      ]
+    }
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "name": "vuetify",
+  "version": "2.7.2",
+  "contributions": {
+    "html": {
+      "tags": [
+        {
+          "name": "VBtn",
+          "description": "Button component",
+          "doc-url": "https://v2.vuetifyjs.com/en/api/v-btn/",
+          "attributes": [
+            { "name": "color", "value": { "type": "string" } },
+            { "name": "elevation", "value": { "type": ["number", "string"] } },
+            { "name": "depressed", "value": { "type": "boolean" } },
+            { "name": "fab", "value": { "type": "boolean" } },
+            { "name": "text", "value": { "type": "boolean" } }
+          ]
+        },
+        { "name": "VContent", "attributes": [] },
+        { "name": "VTabItem", "attributes": [] },
+        { "name": "VDatePicker", "attributes": [] }
+      ]
+    }
+  }
+}
