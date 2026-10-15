@@ -331,7 +331,7 @@ make format  # Luaファイルのフォーマット
 - ✅ **filetypeと登録**: `filetypes`オプションとnvim-cmpへのソース登録
 - ✅ **不明なタグ**: Vuetifyでないタグには補完を返さない
 
-Vuetify 2、3、4の縮小版`web-types.json` fixtureを使用した全41テストが
+Vuetify 2、3、4の縮小版`web-types.json` fixtureを使用した全42テストが
 成功しています。また、公開されているVuetify 2.7.2、3.13.5、4.2.2の
 実パッケージを使用して、補完経路を別途確認済みです。
 

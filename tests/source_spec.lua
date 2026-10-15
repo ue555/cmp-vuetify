@@ -311,6 +311,29 @@ describe('source', function()
     assert.is_nil(items.VBtn)
   end)
 
+  it('asks nvim-cmp to complete again until the case of the tag name is known', function()
+    local root = create_project('3', 'vuetify-3-web-types.json')
+    local function is_incomplete(line)
+      local bufnr = vim.api.nvim_create_buf(false, true)
+      vim.api.nvim_buf_set_name(bufnr, root .. '/Incomplete' .. bufnr .. '.vue')
+      vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, { line })
+      local result
+      instance:complete({
+        context = { bufnr = bufnr, cursor = { line = 0, col = #line + 1 } },
+      }, function(value)
+        result = value
+      end)
+      vim.api.nvim_buf_delete(bufnr, { force = true })
+      return result.isIncomplete
+    end
+
+    assert.is_true(is_incomplete('<'))
+    assert.is_true(is_incomplete('</'))
+    assert.is_false(is_incomplete('<V'))
+    assert.is_false(is_incomplete('<v-'))
+    assert.is_false(is_incomplete('<v-btn '))
+  end)
+
   it('is available for configured filetypes including compound filetypes', function()
     local config = require('cmp_vuetify').get_config()
     local bufnr = vim.api.nvim_create_buf(false, true)

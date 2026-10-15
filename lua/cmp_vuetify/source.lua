@@ -410,6 +410,7 @@ function source:complete(params, callback)
   end
 
   local items = {}
+  local is_incomplete = false
 
   if context == 'attribute' then
     current_tag = current_tag and components.to_kebab_case(current_tag)
@@ -418,9 +419,13 @@ function source:complete(params, callback)
     end
   elseif context == 'tag' then
     items = build_tag_items(tags, tag_content)
+    -- Right after `<` or `</`, the case of the name is not known yet. Ask
+    -- nvim-cmp to complete again on the next keystroke so that typing `V`
+    -- switches the candidates to PascalCase names.
+    is_incomplete = tag_content:match('^</?$') ~= nil
   end
 
-  callback({ items = items, isIncomplete = false })
+  callback({ items = items, isIncomplete = is_incomplete })
 end
 
 return source

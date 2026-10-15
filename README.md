@@ -335,7 +335,7 @@ make format  # Format Lua files
 - ✅ **Filetypes and registration**: `filetypes` option and nvim-cmp source registration
 - ✅ **Unknown tags**: No Vuetify completions for non-Vuetify tags
 
-All 41 tests pass using reduced `web-types.json` fixtures for Vuetify 2, 3,
+All 42 tests pass using reduced `web-types.json` fixtures for Vuetify 2, 3,
 and 4. The completion path was also verified separately with the published
 Vuetify 2.7.2, 3.13.5, and 4.2.2 packages.
 
