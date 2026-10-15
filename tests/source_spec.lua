@@ -212,6 +212,16 @@ describe('source', function()
     assert.is_not_nil(items['v-btn'])
   end)
 
+  it('completes in a workspace package with Vuetify hoisted to the root', function()
+    local workspace = create_project('3', 'vuetify-3-web-types.json')
+    local app = workspace .. '/packages/app'
+    vim.fn.mkdir(app .. '/src', 'p')
+    vim.fn.writefile({ '{"dependencies":{"vuetify":"workspace:*"}}' }, app .. '/package.json')
+
+    local items = complete(instance, app .. '/src', { '<v-btn ' }, 1, '<v-btn ')
+    assert.is_not_nil(items.variant)
+  end)
+
   it('returns no attributes for unknown tags', function()
     local root = create_project('3', 'vuetify-3-web-types.json')
     local items = complete(instance, root, { '<not-vuetify ' }, 1, '<not-vuetify ')

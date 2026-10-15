@@ -20,13 +20,13 @@ Vuetifyコンポーネントとpropsの補完機能を提供する[nvim-cmp](htt
 - **型情報表示** - propsの型、デフォルト値、ドキュメントURLを表示
 - **複数行タグ対応** - 複数行に渡るタグでもpropsを補完
 - **スマートキャッシュ** - プロジェクトごとに60秒間キャッシュ
-- **workspace依存関係対応** - `workspace:*`や`catalog:`でもバージョン検出
+- **workspace依存関係対応** - `workspace:*`や`catalog:`でもバージョン検出し、ワークスペースのルートに巻き上げられたVuetifyも検出
 
 ## 必要要件
 
 - Neovim 0.10以降
 - [nvim-cmp](https://github.com/hrsh7th/nvim-cmp)
-- `node_modules`にインストールされたVuetify 2、3、4のいずれか
+- `node_modules`にインストールされたVuetify 2、3、4のいずれか（プロジェクト自身、またはワークスペースのルートなど親ディレクトリの`node_modules`）
 
 Neovim 0.11.5で動作確認済みです。
 
@@ -193,16 +193,18 @@ require("cmp_vuetify").setup({
 ## 動作の仕組み
 
 1. **プロジェクトルートの検索**: 現在のVueファイルから`package.json`を検索
-2. **バージョン検出**: `node_modules/vuetify/package.json`から正確なバージョンを読み取り
-3. **メタデータ読み込み**: Vuetifyの`web-types.json`ファイルを読み込み
-4. **コンポーネント解析**: コンポーネント名、props、型、ドキュメントURLを抽出
-5. **名前変換**: PascalCase (`VBtn`) をkebab-case (`v-btn`) に変換
-6. **補完提供**: カーソル位置に応じてコンポーネントまたはpropsを返す
+2. **インストール済みVuetifyの検索**: Node.jsのモジュール解決と同様に、プロジェクトルートから親ディレクトリへ`node_modules/vuetify`を検索
+3. **バージョン検出**: インストール済みの`vuetify/package.json`から正確なバージョンを読み取り
+4. **メタデータ読み込み**: Vuetifyの`web-types.json`ファイルを読み込み
+5. **コンポーネント解析**: コンポーネント名、props、型、ドキュメントURLを抽出
+6. **名前変換**: PascalCase (`VBtn`) をkebab-case (`v-btn`) に変換
+7. **補完提供**: カーソル位置に応じてコンポーネントまたはpropsを返す
 
 ### バージョン検出の優先順位
 
 1. **インストール済みパッケージ**（最優先）: `node_modules/vuetify/package.json`
    - `workspace:*`や`catalog:`依存関係でも動作
+   - ワークスペースのルートに巻き上げられたVuetifyも検出（npm/yarn workspaces）
 2. **手動設定**: setupオプションの`version`
    - インストール済みパッケージのバージョンを取得できない場合のみ使用
 3. **プロジェクトの依存関係**: プロジェクトルートの`package.json`
@@ -279,9 +281,10 @@ make format  # Luaファイルのフォーマット
 - ✅ **複数行タグ**: 複数行に渡るprops補完
 - ✅ **属性値内の記号**: `@click="() => x"`や`v-if="a > b"`の後でもprops補完
 - ✅ **キャッシュ更新**: Vuetifyインストール後に即座にメタデータを再読み込み
+- ✅ **ワークスペース**: 親ディレクトリに巻き上げられたVuetifyを検出
 - ✅ **不明なタグ**: Vuetifyでないタグには補完を返さない
 
-Vuetify 2、3、4の縮小版`web-types.json` fixtureを使用した全26テストが
+Vuetify 2、3、4の縮小版`web-types.json` fixtureを使用した全29テストが
 成功しています。また、公開されているVuetify 2.7.2、3.13.5、4.2.2の
 実パッケージを使用して、補完経路を別途確認済みです。
 

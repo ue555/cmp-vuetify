@@ -53,7 +53,8 @@ end
 --- @param root string Project root path
 --- @return number|nil Modification time in seconds, or nil if not installed
 local function get_package_mtime(root)
-  local stat = (vim.uv or vim.loop).fs_stat(root .. '/node_modules/vuetify/package.json')
+  local package_root = utils.find_vuetify_package(root)
+  local stat = package_root and (vim.uv or vim.loop).fs_stat(package_root .. '/package.json')
   return stat and stat.mtime.sec or nil
 end
 

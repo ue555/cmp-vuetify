@@ -49,6 +49,30 @@ function M.read_json_file(path)
   return decoded
 end
 
+--- Find the installed Vuetify package directory.
+--- Searches node_modules in the project root and its parent directories,
+--- like Node.js module resolution, so hoisted workspace installs are found.
+--- @param root string Project root path
+--- @return string|nil Path to node_modules/vuetify, or nil if not installed
+function M.find_vuetify_package(root)
+  local dir = root
+
+  while dir do
+    local package_root = dir .. '/node_modules/vuetify'
+    if (vim.uv or vim.loop).fs_stat(package_root .. '/package.json') then
+      return package_root
+    end
+
+    local parent = vim.fs.dirname(dir)
+    if not parent or parent == dir then
+      return nil
+    end
+    dir = parent
+  end
+
+  return nil
+end
+
 --- Detect Vuetify version from package.json
 --- @param root string Project root path
 --- @return number|nil Vuetify version (2, 3, or 4) or nil if not found
@@ -57,7 +81,8 @@ function M.detect_vuetify_version(root)
 
   -- Prefer the installed package because dependency declarations may use
   -- aliases such as workspace:* or catalog:, and it is the metadata source.
-  local installed_package = M.read_json_file(root .. '/node_modules/vuetify/package.json')
+  local package_root = M.find_vuetify_package(root)
+  local installed_package = package_root and M.read_json_file(package_root .. '/package.json')
   if installed_package and type(installed_package.version) == 'string' then
     local installed_major = tonumber(installed_package.version:match('^(%d+)'))
     if installed_major == 2 or installed_major == 3 or installed_major == 4 then
@@ -114,8 +139,8 @@ end
 --- @return table|nil, table|nil Tags and attributes tables, or nil on error
 function M.load_vuetify_metadata(root, version)
   local components_data = require('cmp_vuetify.components')
-  local package_root = root .. '/node_modules/vuetify'
-  local package_data = M.read_json_file(package_root .. '/package.json')
+  local package_root = M.find_vuetify_package(root)
+  local package_data = package_root and M.read_json_file(package_root .. '/package.json')
 
   if not package_data then
     M.notify('Could not read installed Vuetify package.json', vim.log.levels.WARN)

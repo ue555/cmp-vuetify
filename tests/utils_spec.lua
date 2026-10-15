@@ -48,6 +48,32 @@ describe('utils', function()
     end)
   end)
 
+  describe('find_vuetify_package', function()
+    it('finds Vuetify hoisted to a parent workspace directory', function()
+      local workspace = create_project('3', 'vuetify-3-web-types.json')
+      local app = workspace .. '/packages/app'
+      vim.fn.mkdir(app, 'p')
+      vim.fn.writefile({ '{"dependencies":{"vuetify":"workspace:*"}}' }, app .. '/package.json')
+
+      assert.equal(workspace .. '/node_modules/vuetify', utils.find_vuetify_package(app))
+      assert.equal(3, utils.detect_vuetify_version(app))
+
+      local tags = utils.load_vuetify_metadata(app, 3)
+      assert(tags)
+      assert.is_not_nil(tags['v-btn'])
+    end)
+
+    it('prefers the nearest installed Vuetify package', function()
+      local workspace = create_project('3', 'vuetify-3-web-types.json')
+      local app = workspace .. '/packages/app'
+      vim.fn.mkdir(app .. '/node_modules/vuetify', 'p')
+      vim.fn.writefile({ '{"name":"vuetify","version":"2.7.2"}' }, app .. '/node_modules/vuetify/package.json')
+
+      assert.equal(app .. '/node_modules/vuetify', utils.find_vuetify_package(app))
+      assert.equal(2, utils.detect_vuetify_version(app))
+    end)
+  end)
+
   describe('detect_vuetify_version', function()
     it('prefers the installed package version for workspace dependencies', function()
       local root = create_project('3', 'vuetify-3-web-types.json', 'workspace:*')

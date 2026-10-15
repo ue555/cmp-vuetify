@@ -20,13 +20,13 @@ This plugin reads the official `web-types.json` metadata distributed with the in
 - **Type information**: Shows prop types, defaults, and documentation URLs
 - **Multi-line tags**: Complete props across multiple lines
 - **Smart caching**: 60-second per-project cache for performance
-- **Workspace dependencies**: Detects versions even with `workspace:*` or `catalog:` syntax
+- **Workspace dependencies**: Detects versions even with `workspace:*` or `catalog:` syntax, and finds Vuetify hoisted to the workspace root
 
 ## Requirements
 
 - Neovim 0.10 or later
 - [nvim-cmp](https://github.com/hrsh7th/nvim-cmp)
-- Vuetify 2, 3, or 4 installed in `node_modules`
+- Vuetify 2, 3, or 4 installed in `node_modules` (the project's own or a parent directory's, such as a hoisted workspace root)
 
 The plugin has been tested with Neovim 0.11.5.
 
@@ -193,16 +193,18 @@ require("cmp_vuetify").setup({
 ## How it works
 
 1. **Find project root**: Searches for `package.json` from the current Vue file
-2. **Detect version**: Reads the exact version from `node_modules/vuetify/package.json`
-3. **Load metadata**: Reads Vuetify's `web-types.json` file
-4. **Parse components**: Extracts component names, props, types, and documentation URLs
-5. **Convert names**: Transforms PascalCase (`VBtn`) to kebab-case (`v-btn`)
-6. **Provide completion**: Returns components and props based on cursor context
+2. **Find installed Vuetify**: Searches `node_modules/vuetify` from the project root up through parent directories, like Node.js module resolution
+3. **Detect version**: Reads the exact version from the installed `vuetify/package.json`
+4. **Load metadata**: Reads Vuetify's `web-types.json` file
+5. **Parse components**: Extracts component names, props, types, and documentation URLs
+6. **Convert names**: Transforms PascalCase (`VBtn`) to kebab-case (`v-btn`)
+7. **Provide completion**: Returns components and props based on cursor context
 
 ### Version detection priority
 
 1. **Installed package** (highest priority): `node_modules/vuetify/package.json`
    - Works even with `workspace:*` or `catalog:` dependencies
+   - Also finds Vuetify hoisted to a parent workspace root (npm/yarn workspaces)
 2. **Manual configuration**: `version` in setup options
    - Used only when the installed package version cannot be read
 3. **Project dependencies**: `package.json` in project root
@@ -279,9 +281,10 @@ make format  # Format Lua files
 - ✅ **Multi-line tags**: Prop completion across multiple lines
 - ✅ **Symbols in attribute values**: Prop completion after `@click="() => x"` or `v-if="a > b"`
 - ✅ **Cache refresh**: Metadata reloads immediately after Vuetify is installed
+- ✅ **Workspaces**: Finds Vuetify hoisted to a parent workspace root
 - ✅ **Unknown tags**: No Vuetify completions for non-Vuetify tags
 
-All 26 tests pass using reduced `web-types.json` fixtures for Vuetify 2, 3,
+All 29 tests pass using reduced `web-types.json` fixtures for Vuetify 2, 3,
 and 4. The completion path was also verified separately with the published
 Vuetify 2.7.2, 3.13.5, and 4.2.2 packages.
 
