@@ -267,9 +267,11 @@ make test
 - ✅ **props補完**: コンポーネント固有のpropsフィルタリングとsnippet生成
 - ✅ **PascalCaseタグ**: PascalCaseコンポーネントタグのprops補完
 - ✅ **複数行タグ**: 複数行に渡るprops補完
+- ✅ **属性値内の記号**: `@click="() => x"`や`v-if="a > b"`の後でもprops補完
+- ✅ **キャッシュ更新**: Vuetifyインストール後に即座にメタデータを再読み込み
 - ✅ **不明なタグ**: Vuetifyでないタグには補完を返さない
 
-Vuetify 2、3、4の縮小版`web-types.json` fixtureを使用した全20テストが
+Vuetify 2、3、4の縮小版`web-types.json` fixtureを使用した全26テストが
 成功しています。また、公開されているVuetify 2.7.2、3.13.5、4.2.2の
 実パッケージを使用して、補完経路を別途確認済みです。
 

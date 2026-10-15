@@ -49,6 +49,14 @@ function source:clear_cache(root)
   end
 end
 
+--- Get the modification time of the installed Vuetify package.json
+--- @param root string Project root path
+--- @return number|nil Modification time in seconds, or nil if not installed
+local function get_package_mtime(root)
+  local stat = (vim.uv or vim.loop).fs_stat(root .. '/node_modules/vuetify/package.json')
+  return stat and stat.mtime.sec or nil
+end
+
 --- Load Vuetify components from project
 --- @param bufnr number Buffer number
 local function load_vuetify_components(bufnr)
@@ -61,9 +69,13 @@ local function load_vuetify_components(bufnr)
 
   local project_cache = get_cache(root)
 
-  -- Check if cache is still valid
+  -- Check if cache is still valid. Installing or upgrading Vuetify changes
+  -- the installed package.json, which invalidates the cache immediately.
   local current_time = os.time()
-  if project_cache.timestamp > 0 and (current_time - project_cache.timestamp) < 60 then
+  local package_mtime = get_package_mtime(root)
+  if project_cache.timestamp > 0
+    and (current_time - project_cache.timestamp) < 60
+    and project_cache.package_mtime == package_mtime then
     return project_cache.tags, project_cache.attributes, project_cache.version
   end
 
@@ -84,132 +96,114 @@ local function load_vuetify_components(bufnr)
   project_cache.attributes = attributes or {}
   project_cache.version = version
   project_cache.timestamp = current_time
+  project_cache.package_mtime = package_mtime
 
   return tags or {}, attributes or {}, version
 end
 
---- Determine completion context
---- @return string 'tag'|'attribute'|'none'
-local function get_completion_context(text, col)
-  local before_cursor = text:sub(1, col)
+--- Maximum number of lines scanned before the cursor to find the open tag
+local MAX_LOOKBACK_LINES = 200
 
-  -- Find last < and > positions
-  local last_lt_pos = before_cursor:reverse():find('<')
-  local last_gt_pos = before_cursor:reverse():find('>')
+--- Scan text and return the content of the tag still open at the end.
+--- Quoted attribute values, comments, and mustache interpolations are
+--- skipped so that `<` and `>` inside them do not affect the result.
+--- @param text string Text ending at the cursor
+--- @return string|nil Text from the open tag's `<` to the end, or nil
+local function find_open_tag(text)
+  local pos = 1
+  local len = #text
 
-  -- Convert reversed positions to actual positions
-  if last_lt_pos then
-    last_lt_pos = col - last_lt_pos + 1
+  while pos <= len do
+    -- Text state: look for the next tag opening or interpolation
+    local start, _, token = text:find('([<{])', pos)
+    if not start then
+      return nil
+    end
+
+    if token == '{' then
+      if text:sub(start, start + 1) == '{{' then
+        -- An unclosed interpolation is skipped as plain text
+        local close = text:find('}}', start + 2, true)
+        pos = close and close + 2 or start + 2
+      else
+        pos = start + 1
+      end
+    elseif text:sub(start, start + 3) == '<!--' then
+      local close = text:find('-->', start + 4, true)
+      if not close then
+        return nil
+      end
+      pos = close + 3
+    elseif start == len or text:sub(start + 1, start + 1):match('[%a/]') then
+      -- Tag state: skip quoted values until the closing `>`
+      local tag_pos = start + 1
+      while true do
+        local stop, _, char = text:find('(["\'>])', tag_pos)
+        if not stop then
+          return text:sub(start)
+        end
+
+        if char == '>' then
+          pos = stop + 1
+          break
+        end
+
+        local close = text:find(char, stop + 1, true)
+        if not close then
+          -- Cursor is inside a quoted attribute value
+          return nil
+        end
+        tag_pos = close + 1
+      end
+    else
+      -- `<` not followed by a tag name, such as `a < b`
+      pos = start + 1
+    end
   end
-  if last_gt_pos then
-    last_gt_pos = col - last_gt_pos + 1
-  end
 
-  -- Outside any tag
-  if not last_lt_pos or (last_gt_pos and last_gt_pos > last_lt_pos) then
-    return 'none'
-  end
-
-  -- Inside a tag (between < and cursor, with no > in between)
-  local tag_content = before_cursor:sub(last_lt_pos)
-
-  -- Check if it's a closing tag
-  if tag_content:match('^</%s*$') or tag_content:match('^</[%w%-]*$') then
-    return 'tag'
-  end
-
-  -- Match: <tagname followed by space (attribute context)
-  if tag_content:match('^<[%w%-]+%s+') then
-    return 'attribute'
-  end
-
-  -- Match: <tagname without space (tag name context)
-  if tag_content:match('^<[%w%-]*$') then
-    return 'tag'
-  end
-
-  return 'none'
+  return nil
 end
 
---- Extract the current tag name from the line
-local function get_current_tag(text, col)
-  local before_cursor = text:sub(1, col)
-
-  -- Find last < position
-  local last_lt_pos = before_cursor:reverse():find('<')
-  if not last_lt_pos then
-    return nil
-  end
-
-  last_lt_pos = col - last_lt_pos + 1
-  local tag_content = before_cursor:sub(last_lt_pos)
-
-  -- Match tag name after <
-  local tag = tag_content:match('^<([%w%-]+)')
-  return tag
-end
-
---- Get text from tag opening to cursor for multi-line support
+--- Determine completion context at the cursor
 --- @param bufnr number Buffer number
 --- @param cursor_line number Cursor line number (1-indexed)
 --- @param cursor_col number Cursor column (1-indexed, byte position)
---- @return string Text from tag opening to cursor
---- @return number Column offset in the combined text
-local function get_tag_context(bufnr, cursor_line, cursor_col)
-  -- Get current line
-  local lines = vim.api.nvim_buf_get_lines(bufnr, cursor_line - 1, cursor_line, false)
+--- @return string 'tag'|'attribute'|'none'
+--- @return string|nil Current tag name in attribute context
+local function get_completion_context(bufnr, cursor_line, cursor_col)
+  local first_line = math.max(0, cursor_line - 1 - MAX_LOOKBACK_LINES)
+  local lines = vim.api.nvim_buf_get_lines(bufnr, first_line, cursor_line, false)
   if #lines == 0 then
-    return '', 0
+    return 'none', nil
   end
 
-  local current_line = lines[1]
-  local before_cursor = current_line:sub(1, cursor_col - 1)
+  lines[#lines] = lines[#lines]:sub(1, cursor_col - 1)
 
-  -- Check if there's a < on the current line
-  if before_cursor:find('<[^>]*$') then
-    return before_cursor, #before_cursor
-  end
-
-  -- Look back for tag opening (up to 20 lines)
-  local lookback_lines = math.min(20, cursor_line - 1)
-  if lookback_lines == 0 then
-    return before_cursor, #before_cursor
-  end
-
-  -- Get previous lines
-  local prev_lines = vim.api.nvim_buf_get_lines(bufnr, cursor_line - 1 - lookback_lines, cursor_line - 1, false)
-
-  -- Search backwards for the last unclosed <
-  local combined_text = ''
-  local tag_start_found = false
-
-  for i = #prev_lines, 1, -1 do
-    local line = prev_lines[i]
-    combined_text = line .. '\n' .. combined_text
-
-    -- Check if this line contains an unclosed <
-    local lt_count = 0
-    local gt_count = 0
-    for _ in line:gmatch('<') do
-      lt_count = lt_count + 1
-    end
-    for _ in line:gmatch('>') do
-      gt_count = gt_count + 1
-    end
-
-    if lt_count > gt_count then
-      tag_start_found = true
+  -- Start after the last <script> or <style> block above the cursor, since
+  -- their code may contain `<` and quotes that are not HTML.
+  for i = #lines - 1, 1, -1 do
+    if lines[i]:match('^%s*</script%s*>') or lines[i]:match('^%s*</style%s*>') then
+      lines = vim.list_slice(lines, i + 1)
       break
     end
   end
-
-  if tag_start_found then
-    combined_text = combined_text .. before_cursor
-    local offset = #combined_text
-    return combined_text, offset
-  else
-    return before_cursor, #before_cursor
+  local tag_content = find_open_tag(table.concat(lines, '\n'))
+  if not tag_content then
+    return 'none', nil
   end
+
+  -- Closing tag or tag name being typed
+  if tag_content:match('^</?[%w%-]*$') then
+    return 'tag', nil
+  end
+
+  -- Tag name followed by whitespace
+  local tag = tag_content:match('^<([%w%-]+)%s')
+  if tag then
+    return 'attribute', tag
+  end
+
+  return 'none', nil
 end
 
 --- Complete function - provides completion items
@@ -219,8 +213,8 @@ function source:complete(params, callback)
   local cursor_line = cursor.line + 1  -- Convert to 1-indexed
   local cursor_col = cursor.col
 
-  -- Get text from tag opening to cursor (multi-line support)
-  local context_text, col_offset = get_tag_context(bufnr, cursor_line, cursor_col)
+  -- Determine context from the tag open at the cursor (multi-line support)
+  local context, current_tag = get_completion_context(bufnr, cursor_line, cursor_col)
 
   local tags, attributes = load_vuetify_components(bufnr)
 
@@ -231,11 +225,9 @@ function source:complete(params, callback)
   end
 
   local items = {}
-  local context = get_completion_context(context_text, col_offset)
 
   if context == 'attribute' then
     -- Provide attribute completion
-    local current_tag = get_current_tag(context_text, col_offset)
     current_tag = current_tag and components.to_kebab_case(current_tag)
 
     if current_tag and tags[current_tag] then

@@ -136,6 +136,81 @@ describe('source', function()
     assert.is_nil(items.variant)
   end)
 
+  it('ignores > and < inside quoted attribute values', function()
+    local root = create_project('3', 'vuetify-3-web-types.json')
+
+    for _, line in ipairs({
+      '<v-btn @click="() => go()" ',
+      '<v-btn v-if="a > b" ',
+      "<v-btn v-if='a < b' ",
+      '<p>{{ a < b }}</p><v-btn ',
+      '<!-- <div> --><v-btn ',
+    }) do
+      local items = complete(instance, root, { line }, 1, line)
+      assert.is_not_nil(items.variant, line)
+    end
+  end)
+
+  it('ignores code in a script block above the template', function()
+    local root = create_project('3', 'vuetify-3-web-types.json')
+    local lines = {
+      '<script setup lang="ts">',
+      'for (let i = 0; i<n; i++) {}',
+      "// don't stop",
+      '</script>',
+      '<template>',
+      '  <p>{{ unclosed',
+      '  <v-btn ',
+    }
+
+    local items = complete(instance, root, lines, #lines, lines[#lines])
+    assert.is_not_nil(items.variant)
+  end)
+
+  it('does not complete inside quoted attribute values or after a closed tag', function()
+    local root = create_project('3', 'vuetify-3-web-types.json')
+
+    assert.same({}, complete(instance, root, { '<v-btn color="' }, 1, '<v-btn color="'))
+    assert.same({}, complete(instance, root, { '<v-btn>text ' }, 1, '<v-btn>text '))
+  end)
+
+  it('completes attributes in a multi-line tag with arrow functions and comparisons', function()
+    local root = create_project('3', 'vuetify-3-web-types.json')
+    local items = complete(instance, root, {
+      '<v-btn',
+      '  @click="() => go()"',
+      '  v-if="a > b"',
+      '  ',
+    }, 4, '  ')
+
+    assert.is_not_nil(items.variant)
+  end)
+
+  it('completes attributes in a tag spanning more than 20 lines', function()
+    local root = create_project('3', 'vuetify-3-web-types.json')
+    local lines = { '<v-btn' }
+    for i = 1, 30 do
+      table.insert(lines, '  data-a' .. i .. '="1"')
+    end
+    table.insert(lines, '  ')
+
+    local items = complete(instance, root, lines, #lines, '  ')
+    assert.is_not_nil(items.variant)
+  end)
+
+  it('reloads metadata when Vuetify is installed after a failed load', function()
+    local root = create_project('3', 'vuetify-3-web-types.json')
+    local package_path = root .. '/node_modules/vuetify/package.json'
+    local package_lines = vim.fn.readfile(package_path)
+    vim.fn.delete(package_path)
+
+    assert.same({}, complete(instance, root, { '<v-' }, 1, '<v-'))
+
+    vim.fn.writefile(package_lines, package_path)
+    local items = complete(instance, root, { '<v-' }, 1, '<v-')
+    assert.is_not_nil(items['v-btn'])
+  end)
+
   it('returns no attributes for unknown tags', function()
     local root = create_project('3', 'vuetify-3-web-types.json')
     local items = complete(instance, root, { '<not-vuetify ' }, 1, '<not-vuetify ')

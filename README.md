@@ -267,9 +267,11 @@ make test
 - ✅ **Prop completion**: Component-specific prop filtering and snippet generation
 - ✅ **PascalCase tags**: Prop completion for PascalCase component tags
 - ✅ **Multi-line tags**: Prop completion across multiple lines
+- ✅ **Symbols in attribute values**: Prop completion after `@click="() => x"` or `v-if="a > b"`
+- ✅ **Cache refresh**: Metadata reloads immediately after Vuetify is installed
 - ✅ **Unknown tags**: No Vuetify completions for non-Vuetify tags
 
-All 20 tests pass using reduced `web-types.json` fixtures for Vuetify 2, 3,
+All 26 tests pass using reduced `web-types.json` fixtures for Vuetify 2, 3,
 and 4. The completion path was also verified separately with the published
 Vuetify 2.7.2, 3.13.5, and 4.2.2 packages.
 
