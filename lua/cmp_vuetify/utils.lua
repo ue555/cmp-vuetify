@@ -136,7 +136,9 @@ end
 --- Load Vuetify component metadata
 --- @param root string Project root path
 --- @param version number Vuetify version (2, 3, or 4)
---- @return table|nil, table|nil Tags and attributes tables, or nil on error
+--- @return table|nil tags Tags table, or nil on error
+--- @return table|nil attributes Attributes table, or nil on error
+--- @return table|nil events Events table, or nil on error
 function M.load_vuetify_metadata(root, version)
   local components_data = require('cmp_vuetify.components')
   local package_root = M.find_vuetify_package(root)
@@ -144,7 +146,7 @@ function M.load_vuetify_metadata(root, version)
 
   if not package_data then
     M.notify('Could not read installed Vuetify package.json', vim.log.levels.WARN)
-    return nil, nil
+    return nil, nil, nil
   end
 
   local web_types_path = package_data['web-types'] or 'dist/json/web-types.json'
@@ -152,7 +154,7 @@ function M.load_vuetify_metadata(root, version)
 
   if not metadata then
     M.notify('Could not read Vuetify web-types metadata for v' .. version, vim.log.levels.WARN)
-    return nil, nil
+    return nil, nil, nil
   end
 
   return components_data.from_web_types(metadata)

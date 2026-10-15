@@ -36,15 +36,17 @@ end
 --- @param metadata table Decoded web-types.json data
 --- @return table tags
 --- @return table attributes
+--- @return table events
 function M.from_web_types(metadata)
   local html = metadata and metadata.contributions and metadata.contributions.html
 
   if not html or type(html.tags) ~= 'table' then
-    return {}, {}
+    return {}, {}, {}
   end
 
   local tags = {}
   local attributes = {}
+  local events = {}
 
   for _, tag in ipairs(html.tags) do
     if type(tag.name) == 'string' then
@@ -64,16 +66,41 @@ function M.from_web_types(metadata)
         end
       end
 
+      local event_names = {}
+
+      for _, event in ipairs(tag.events or {}) do
+        if type(event.name) == 'string' then
+          local event_name = M.to_kebab_case(event.name)
+          table.insert(event_names, event_name)
+          events[tag_name .. '/' .. event_name] = {
+            description = event.description or '',
+            documentation_url = event['doc-url'],
+          }
+        end
+      end
+
+      -- Prop and event bound by v-model (modelValue in Vue 3, value in Vue 2)
+      local model = nil
+      local vue_model = tag['vue-model']
+      if type(vue_model) == 'table' and type(vue_model.prop) == 'string' and type(vue_model.event) == 'string' then
+        model = {
+          prop = M.to_kebab_case(vue_model.prop),
+          event = M.to_kebab_case(vue_model.event),
+        }
+      end
+
       tags[tag_name] = {
         description = tag.description or '',
         documentation_url = tag['doc-url'],
         attributes = attribute_names,
+        events = event_names,
+        model = model,
         original_name = tag.name,
       }
     end
   end
 
-  return tags, attributes
+  return tags, attributes, events
 end
 
 return M

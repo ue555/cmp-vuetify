@@ -222,6 +222,113 @@ describe('source', function()
     assert.is_not_nil(items.variant)
   end)
 
+  it('completes events after @ and v-on:', function()
+    local root = create_project('3', 'vuetify-3-web-types.json')
+
+    local items = complete(instance, root, { '<v-btn @' }, 1, '<v-btn @')
+    assert.equal('@click="${1}"', items['@click'].insertText)
+    assert.is_not_nil(items['@update:model-value'])
+    assert.equal(23, items['@click'].kind)
+    assert.is_nil(items.color)
+
+    items = complete(instance, root, { '<v-btn v-on:up' }, 1, '<v-btn v-on:up')
+    assert.equal('v-on:update:model-value="${1}"', items['v-on:update:model-value'].insertText)
+  end)
+
+  it('completes bound props after : and v-bind:', function()
+    local root = create_project('3', 'vuetify-3-web-types.json')
+
+    local items = complete(instance, root, { '<v-btn :' }, 1, '<v-btn :')
+    assert.equal(':color="${1}"', items[':color'].insertText)
+    assert.equal(':stacked="${1}"', items[':stacked'].insertText)
+    assert.is_nil(items['@click'])
+
+    items = complete(instance, root, { '<v-btn v-bind:co' }, 1, '<v-btn v-bind:co')
+    assert.equal('v-bind:color="${1}"', items['v-bind:color'].insertText)
+  end)
+
+  it('excludes props and events already written in the tag', function()
+    local root = create_project('3', 'vuetify-3-web-types.json')
+    local lines = { '<v-btn', '  color="red"', '  :variant="v"', '  @click.stop="go"', '  ' }
+
+    local items = complete(instance, root, lines, #lines, '  ')
+    assert.is_nil(items.color)
+    assert.is_nil(items.variant)
+    assert.is_not_nil(items.density)
+
+    lines[#lines] = '  @'
+    items = complete(instance, root, lines, #lines, '  @')
+    assert.is_nil(items['@click'])
+    assert.is_not_nil(items['@update:model-value'])
+  end)
+
+  it('excludes the prop and event bound by v-model', function()
+    local root = create_project('3', 'vuetify-3-web-types.json')
+
+    local items = complete(instance, root, { '<v-btn v-model="x" ' }, 1, '<v-btn v-model="x" ')
+    assert.is_nil(items['model-value'])
+    assert.is_not_nil(items.color)
+
+    items = complete(instance, root, { '<v-btn v-model="x" @' }, 1, '<v-btn v-model="x" @')
+    assert.is_nil(items['@update:model-value'])
+    assert.is_not_nil(items['@click'])
+  end)
+
+  it('keeps the prop being typed in the candidates', function()
+    local root = create_project('3', 'vuetify-3-web-types.json')
+    local items = complete(instance, root, { '<v-btn col' }, 1, '<v-btn col')
+
+    assert.is_not_nil(items.color)
+  end)
+
+  it('inserts props whose type is a union with boolean without a value', function()
+    local root = create_project('3', 'vuetify-3-web-types.json')
+    local items = complete(instance, root, { '<v-btn ' }, 1, '<v-btn ')
+
+    assert.equal('loading', items.loading.insertText)
+    assert.equal('rules="${1}"', items.rules.insertText)
+    assert.equal('model-value="${1}"', items['model-value'].insertText)
+
+    root = create_project('2', 'vuetify-2-web-types.json')
+    instance:clear_cache()
+    items = complete(instance, root, { '<v-btn ' }, 1, '<v-btn ')
+    assert.equal('loading', items.loading.insertText)
+    assert.equal('elevation="${1}"', items.elevation.insertText)
+  end)
+
+  it('completes PascalCase component names when typed in PascalCase', function()
+    local root = create_project('3', 'vuetify-3-web-types.json')
+
+    local items = complete(instance, root, { '<VB' }, 1, '<VB')
+    assert.is_not_nil(items.VBtn)
+    assert.is_nil(items['v-btn'])
+
+    items = complete(instance, root, { '</VB' }, 1, '</VB')
+    assert.is_not_nil(items.VBtn)
+
+    items = complete(instance, root, { '<v-' }, 1, '<v-')
+    assert.is_not_nil(items['v-btn'])
+    assert.is_nil(items.VBtn)
+  end)
+
+  it('is available for configured filetypes including compound filetypes', function()
+    local config = require('cmp_vuetify').get_config()
+    local bufnr = vim.api.nvim_create_buf(false, true)
+    vim.api.nvim_set_current_buf(bufnr)
+
+    vim.bo.filetype = 'vue.html'
+    assert.is_true(instance:is_available())
+
+    vim.bo.filetype = 'html'
+    assert.is_false(instance:is_available())
+
+    config.filetypes = { 'vue', 'html' }
+    assert.is_true(instance:is_available())
+    config.filetypes = { 'vue' }
+
+    vim.api.nvim_buf_delete(bufnr, { force = true })
+  end)
+
   it('returns no attributes for unknown tags', function()
     local root = create_project('3', 'vuetify-3-web-types.json')
     local items = complete(instance, root, { '<not-vuetify ' }, 1, '<not-vuetify ')

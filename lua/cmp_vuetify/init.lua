@@ -4,13 +4,34 @@ local M = {}
 local config = {
   version = nil, -- Auto-detect from package.json
   notification_level = vim.log.levels.WARN,
+  filetypes = { 'vue' }, -- Filetypes where completion is enabled
 }
+
+local registered = false
+
+--- Register the source with nvim-cmp if it is available
+--- @return boolean True if the source is registered
+function M.register()
+  if registered then
+    return true
+  end
+
+  local ok, cmp = pcall(require, 'cmp')
+  if not ok then
+    return false
+  end
+
+  cmp.register_source('vuetify', require('cmp_vuetify.source').new())
+  registered = true
+  return true
+end
 
 --- Setup function for user configuration
 --- @param opts table|nil User configuration options
 function M.setup(opts)
   opts = opts or {}
   config = vim.tbl_deep_extend('force', config, opts)
+  M.register()
 end
 
 --- Get current configuration

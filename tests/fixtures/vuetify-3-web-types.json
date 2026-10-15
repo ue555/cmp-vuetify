@@ -12,8 +12,21 @@
             { "name": "color", "value": { "type": "string" } },
             { "name": "variant", "value": { "type": "string" } },
             { "name": "density", "value": { "type": "string" } },
-            { "name": "stacked", "value": { "type": "boolean" } }
-          ]
+            { "name": "stacked", "value": { "type": "boolean" } },
+            { "name": "loading", "value": { "type": "string | boolean" } },
+            { "name": "modelValue", "value": { "type": "any" } },
+            { "name": "rules", "value": { "type": "(\n  | string\n  | boolean\n)[]" } }
+          ],
+          "events": [
+            {
+              "name": "click",
+              "description": "Event that is emitted when the component is clicked",
+              "doc-url": "https://vuetifyjs.com/api/v-btn#events"
+            },
+            { "name": "update:modelValue" },
+            { "name": "group:selected" }
+          ],
+          "vue-model": { "prop": "modelValue", "event": "update:modelValue" }
         },
         { "name": "VMain", "attributes": [] },
         { "name": "VCardItem", "attributes": [] },

@@ -16,7 +16,10 @@ This plugin reads the official `web-types.json` metadata distributed with the in
   - Vuetify 2: `v-content`, `v-tab-item`, `depressed`, `fab`
   - Vuetify 3+: `v-main`, `v-card-item`, `variant`, `density`
   - Vuetify 4: `v-icon-btn`, `hover-elevation`
-- **PascalCase support**: Complete props for `<VBtn` with kebab-case conversion
+- **Event completion**: Complete component events after `@` or `v-on:` (e.g. `@click:clear`, `@update:model-value`)
+- **Bound props**: Complete props after `:` or `v-bind:`
+- **Skips written attributes**: Props and events already written in the tag (including those bound by `v-model`) are not suggested again
+- **PascalCase support**: Complete `<VBtn` as PascalCase component names, and props for PascalCase tags
 - **Type information**: Shows prop types, defaults, and documentation URLs
 - **Multi-line tags**: Complete props across multiple lines
 - **Smart caching**: 60-second per-project cache for performance
@@ -27,6 +30,7 @@ This plugin reads the official `web-types.json` metadata distributed with the in
 - Neovim 0.10 or later
 - [nvim-cmp](https://github.com/hrsh7th/nvim-cmp)
 - Vuetify 2, 3, or 4 installed in `node_modules` (the project's own or a parent directory's, such as a hoisted workspace root)
+  - Yarn Plug'n'Play (no `node_modules`) is not supported. Use `nodeLinker: node-modules` in `.yarnrc.yml`
 
 The plugin has been tested with Neovim 0.11.5.
 
@@ -137,19 +141,53 @@ Type a space after the component name to see its props:
 </template>
 ```
 
-Boolean props are inserted without quotes:
+Boolean props, including simple unions with boolean such as `string | boolean`,
+are inserted without a value:
 
 ```vue
-<v-btn disabled>
+<v-btn disabled loading>
 ```
 
-Non-boolean props are inserted as snippets:
+Other props are inserted as snippets:
 
 ```vue
 <v-btn color="${1}">
 ```
 
+Props already written in the tag are not suggested again. Props and events
+bound by `v-model` (`model-value` / `update:model-value` in Vuetify 3+,
+`value` and its event in Vuetify 2) are also skipped.
+
+### Bound props
+
+Type `:` or `v-bind:` to complete props as bindings. Values are always
+inserted as snippets:
+
+```vue
+<v-btn :color="${1}">
+```
+
+### Event completion
+
+Type `@` or `v-on:` to see the component's events:
+
+```vue
+<template>
+  <v-text-field @
+  <!-- Shows: @click:clear, @update:model-value, ... -->
+</template>
+```
+
 ### PascalCase support
+
+Component names typed in PascalCase are completed in PascalCase:
+
+```vue
+<template>
+  <VTe
+  <!-- Shows: VTextField, VTextarea, ... -->
+</template>
+```
 
 Props are also completed for PascalCase component tags:
 
@@ -187,8 +225,17 @@ require("cmp_vuetify").setup({
   -- Notification level for warnings and errors
   -- Default: vim.log.levels.WARN
   notification_level = vim.log.levels.WARN,
+
+  -- Filetypes where completion is enabled
+  -- Compound filetypes such as "vue.html" match by each part
+  -- Default: { "vue" }
+  filetypes = { "vue" },
 })
 ```
+
+The source is registered with nvim-cmp automatically. If nvim-cmp is loaded
+later (for example, lazy-loaded on `InsertEnter`), registration is retried on
+`InsertEnter`, and `setup()` also registers it.
 
 ## How it works
 
@@ -282,9 +329,13 @@ make format  # Format Lua files
 - ✅ **Symbols in attribute values**: Prop completion after `@click="() => x"` or `v-if="a > b"`
 - ✅ **Cache refresh**: Metadata reloads immediately after Vuetify is installed
 - ✅ **Workspaces**: Finds Vuetify hoisted to a parent workspace root
+- ✅ **Events**: Event completion after `@` and `v-on:`
+- ✅ **Written attributes**: Props and events already in the tag, including `v-model`, are skipped
+- ✅ **Boolean unions**: Props such as `string | boolean` are inserted without a value
+- ✅ **Filetypes and registration**: `filetypes` option and nvim-cmp source registration
 - ✅ **Unknown tags**: No Vuetify completions for non-Vuetify tags
 
-All 29 tests pass using reduced `web-types.json` fixtures for Vuetify 2, 3,
+All 41 tests pass using reduced `web-types.json` fixtures for Vuetify 2, 3,
 and 4. The completion path was also verified separately with the published
 Vuetify 2.7.2, 3.13.5, and 4.2.2 packages.
 

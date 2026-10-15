@@ -13,8 +13,12 @@
             { "name": "elevation", "value": { "type": ["number", "string"] } },
             { "name": "depressed", "value": { "type": "boolean" } },
             { "name": "fab", "value": { "type": "boolean" } },
-            { "name": "text", "value": { "type": "boolean" } }
-          ]
+            { "name": "text", "value": { "type": "boolean" } },
+            { "name": "loading", "value": { "type": ["boolean", "string"] } },
+            { "name": "value", "value": { "type": "any" } }
+          ],
+          "events": [{ "name": "click" }],
+          "vue-model": { "prop": "value", "event": "change" }
         },
         { "name": "VContent", "attributes": [] },
         { "name": "VTabItem", "attributes": [] },

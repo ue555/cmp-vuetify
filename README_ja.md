@@ -16,7 +16,10 @@ Vuetifyコンポーネントとpropsの補完機能を提供する[nvim-cmp](htt
   - Vuetify 2: `v-content`, `v-tab-item`, `depressed`, `fab`
   - Vuetify 3+: `v-main`, `v-card-item`, `variant`, `density`
   - Vuetify 4: `v-icon-btn`, `hover-elevation`
-- **PascalCase対応** - `<VBtn`でもkebab-caseのpropsを補完
+- **イベント補完** - `@`や`v-on:`の後にコンポーネントのイベントを補完（例: `@click:clear`、`@update:model-value`）
+- **バインド props** - `:`や`v-bind:`の後にpropsを補完
+- **入力済み属性の除外** - タグに書いたpropsとイベント（`v-model`で指定されるものを含む）は候補に出さない
+- **PascalCase対応** - `<VBtn`のようにPascalCaseで入力するとPascalCaseのコンポーネント名を補完し、PascalCaseタグでもpropsを補完
 - **型情報表示** - propsの型、デフォルト値、ドキュメントURLを表示
 - **複数行タグ対応** - 複数行に渡るタグでもpropsを補完
 - **スマートキャッシュ** - プロジェクトごとに60秒間キャッシュ
@@ -27,6 +30,7 @@ Vuetifyコンポーネントとpropsの補完機能を提供する[nvim-cmp](htt
 - Neovim 0.10以降
 - [nvim-cmp](https://github.com/hrsh7th/nvim-cmp)
 - `node_modules`にインストールされたVuetify 2、3、4のいずれか（プロジェクト自身、またはワークスペースのルートなど親ディレクトリの`node_modules`）
+  - Yarn Plug'n'Play（`node_modules`を作らない方式）には対応していません。`.yarnrc.yml`で`nodeLinker: node-modules`を指定してください
 
 Neovim 0.11.5で動作確認済みです。
 
@@ -137,19 +141,50 @@ cmp.setup({
 </template>
 ```
 
-boolean型のpropsはクォートなしで挿入されます：
+boolean型のprops、および`string | boolean`のようにbooleanを含む単純なunion型のpropsは値なしで挿入されます：
 
 ```vue
-<v-btn disabled>
+<v-btn disabled loading>
 ```
 
-boolean型以外のpropsはsnippet形式で挿入されます：
+それ以外のpropsはsnippet形式で挿入されます：
 
 ```vue
 <v-btn color="${1}">
 ```
 
+タグに入力済みのpropsは候補に表示されません。`v-model`で指定されるpropsとイベント
+（Vuetify 3以降は`model-value`と`update:model-value`、Vuetify 2は`value`とそのイベント）も除外されます。
+
+### バインドprops
+
+`:`や`v-bind:`を入力すると、バインド形式でpropsを補完します。値は常にsnippet形式で挿入されます：
+
+```vue
+<v-btn :color="${1}">
+```
+
+### イベント補完
+
+`@`や`v-on:`を入力すると、そのコンポーネントのイベントが表示されます：
+
+```vue
+<template>
+  <v-text-field @
+  <!-- 表示: @click:clear, @update:model-value, ... -->
+</template>
+```
+
 ### PascalCase対応
+
+PascalCaseで入力したコンポーネント名はPascalCaseで補完されます：
+
+```vue
+<template>
+  <VTe
+  <!-- 表示: VTextField, VTextarea, ... -->
+</template>
+```
 
 PascalCaseのコンポーネントタグでもpropsが補完されます：
 
@@ -187,8 +222,16 @@ require("cmp_vuetify").setup({
   -- 警告とエラーの通知レベル
   -- デフォルト: vim.log.levels.WARN
   notification_level = vim.log.levels.WARN,
+
+  -- 補完を有効にするfiletype
+  -- "vue.html"のような複合filetypeは各部分で判定
+  -- デフォルト: { "vue" }
+  filetypes = { "vue" },
 })
 ```
+
+ソースはnvim-cmpに自動で登録されます。nvim-cmpが後から読み込まれる場合（`InsertEnter`での遅延読み込みなど）は
+`InsertEnter`時に登録を再試行し、`setup()`の呼び出しでも登録されます。
 
 ## 動作の仕組み
 
@@ -282,9 +325,13 @@ make format  # Luaファイルのフォーマット
 - ✅ **属性値内の記号**: `@click="() => x"`や`v-if="a > b"`の後でもprops補完
 - ✅ **キャッシュ更新**: Vuetifyインストール後に即座にメタデータを再読み込み
 - ✅ **ワークスペース**: 親ディレクトリに巻き上げられたVuetifyを検出
+- ✅ **イベント**: `@`や`v-on:`の後のイベント補完
+- ✅ **入力済み属性**: `v-model`を含め、タグに書いたpropsとイベントを除外
+- ✅ **booleanのunion型**: `string | boolean`などのpropsを値なしで挿入
+- ✅ **filetypeと登録**: `filetypes`オプションとnvim-cmpへのソース登録
 - ✅ **不明なタグ**: Vuetifyでないタグには補完を返さない
 
-Vuetify 2、3、4の縮小版`web-types.json` fixtureを使用した全29テストが
+Vuetify 2、3、4の縮小版`web-types.json` fixtureを使用した全41テストが
 成功しています。また、公開されているVuetify 2.7.2、3.13.5、4.2.2の
 実パッケージを使用して、補完経路を別途確認済みです。
 
