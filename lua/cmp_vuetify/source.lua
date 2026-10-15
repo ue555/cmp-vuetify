@@ -73,9 +73,11 @@ local function load_vuetify_components(bufnr)
   -- the installed package.json, which invalidates the cache immediately.
   local current_time = os.time()
   local package_mtime = get_package_mtime(root)
-  if project_cache.timestamp > 0
+  if
+    project_cache.timestamp > 0
     and (current_time - project_cache.timestamp) < 60
-    and project_cache.package_mtime == package_mtime then
+    and project_cache.package_mtime == package_mtime
+  then
     return project_cache.tags, project_cache.attributes, project_cache.version
   end
 
@@ -210,7 +212,7 @@ end
 function source:complete(params, callback)
   local bufnr = params.context.bufnr
   local cursor = params.context.cursor
-  local cursor_line = cursor.line + 1  -- Convert to 1-indexed
+  local cursor_line = cursor.line + 1 -- Convert to 1-indexed
   local cursor_col = cursor.col
 
   -- Determine context from the tag open at the cursor (multi-line support)
@@ -236,8 +238,7 @@ function source:complete(params, callback)
 
       for _, attr_name in ipairs(tag_attrs) do
         local attr_info = attributes[current_tag .. '/' .. attr_name] or {}
-        local doc_value = attr_info.description ~= '' and attr_info.description
-          or ('Attribute for ' .. current_tag)
+        local doc_value = attr_info.description ~= '' and attr_info.description or ('Attribute for ' .. current_tag)
 
         if attr_info.type then
           doc_value = doc_value .. '\n\n_Type: `' .. attr_info.type .. '`_'

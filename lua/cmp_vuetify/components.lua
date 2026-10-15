@@ -1,23 +1,10 @@
 local M = {}
 
-local function is_list(value)
-  if vim.islist then
-    return vim.islist(value)
-  end
-
-  return vim.tbl_islist(value)
-end
-
 --- Convert a PascalCase or camelCase identifier to kebab-case.
 --- @param name string
 --- @return string
 function M.to_kebab_case(name)
-  return name
-    :gsub('(%u)(%u%l)', '%1-%2')
-    :gsub('(%l%d)(%u)', '%1-%2')
-    :gsub('(%l)(%u)', '%1-%2')
-    :gsub('_', '-')
-    :lower()
+  return name:gsub('(%u)(%u%l)', '%1-%2'):gsub('(%l%d)(%u)', '%1-%2'):gsub('(%l)(%u)', '%1-%2'):gsub('_', '-'):lower()
 end
 
 local function get_value_type(attribute)
@@ -28,7 +15,7 @@ local function get_value_type(attribute)
       return value_type
     end
 
-    if type(value_type) == 'table' and is_list(value_type) then
+    if type(value_type) == 'table' and vim.islist(value_type) then
       local types = {}
       for _, item in ipairs(value_type) do
         if type(item) == 'string' then
@@ -50,9 +37,7 @@ end
 --- @return table tags
 --- @return table attributes
 function M.from_web_types(metadata)
-  local html = metadata
-    and metadata.contributions
-    and metadata.contributions.html
+  local html = metadata and metadata.contributions and metadata.contributions.html
 
   if not html or type(html.tags) ~= 'table' then
     return {}, {}

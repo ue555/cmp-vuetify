@@ -20,7 +20,7 @@ function M.find_project_root(bufnr)
   end
 
   local current_dir = vim.fn.fnamemodify(current_file, ':p:h')
-  local root = vim.fn.findfile('package.json', current_dir .. ';')
+  local root = vim.fn.findfile('package.json', current_dir .. ';') --[[@as string]]
 
   if root ~= '' then
     return vim.fn.fnamemodify(root, ':p:h')

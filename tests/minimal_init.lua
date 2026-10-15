@@ -34,6 +34,6 @@ package.loaded['cmp'] = {
       Property = 1,
       Class = 2,
       Keyword = 3,
-    }
-  }
+    },
+  },
 }

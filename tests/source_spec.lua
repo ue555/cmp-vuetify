@@ -67,7 +67,7 @@ describe('source', function()
   end)
 
   it('exposes the source interface', function()
-    assert.equals('vuetify', instance:get_debug_name())
+    assert.equal('vuetify', instance:get_debug_name())
     assert.is_true(vim.tbl_contains(instance:get_trigger_characters(), '<'))
 
     vim.bo.filetype = 'vue'
@@ -113,9 +113,9 @@ describe('source', function()
     local items = complete(instance, root, { '<v-btn ' }, 1, '<v-btn ')
 
     assert.is_not_nil(items.variant)
-    assert.equals('variant="${1}"', items.variant.insertText)
+    assert.equal('variant="${1}"', items.variant.insertText)
     assert.is_not_nil(items.stacked)
-    assert.equals('stacked', items.stacked.insertText)
+    assert.equal('stacked', items.stacked.insertText)
     assert.is_nil(items.depressed)
     assert.is_nil(items.fab)
   end)
@@ -147,6 +147,7 @@ describe('source', function()
       '<!-- <div> --><v-btn ',
     }) do
       local items = complete(instance, root, { line }, 1, line)
+      ---@diagnostic disable-next-line: redundant-parameter
       assert.is_not_nil(items.variant, line)
     end
   end)

@@ -257,6 +257,16 @@ require("cmp_vuetify").reload()
 make test
 ```
 
+### Lintとフォーマット
+
+フォーマットは[StyLua](https://github.com/JohnnyMorganz/StyLua)（`.stylua.toml`）、
+静的解析は[lua-language-server](https://github.com/LuaLS/lua-language-server)（`.luarc.json`）を使用します:
+
+```bash
+make lint    # フォーマットと静的解析のチェック
+make format  # Luaファイルのフォーマット
+```
+
 ### テストカバレッジ
 
 - ✅ **コンポーネント解析**: web-types.jsonから補完データへの変換

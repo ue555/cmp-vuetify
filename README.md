@@ -257,6 +257,16 @@ Tests use [plenary.nvim](https://github.com/nvim-lua/plenary.nvim):
 make test
 ```
 
+### Lint and format
+
+Formatting uses [StyLua](https://github.com/JohnnyMorganz/StyLua) (`.stylua.toml`)
+and diagnostics use [lua-language-server](https://github.com/LuaLS/lua-language-server) (`.luarc.json`):
+
+```bash
+make lint    # Check formatting and diagnostics
+make format  # Format Lua files
+```
+
 ### Test coverage
 
 - ✅ **Component parsing**: web-types.json to completion data conversion
